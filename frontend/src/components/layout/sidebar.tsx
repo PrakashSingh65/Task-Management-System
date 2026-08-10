@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Check,
   ChevronRight,
@@ -68,8 +69,12 @@ export function Sidebar() {
                 <div className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-lg mb-2">
                   D
                 </div>
-                <span className="font-bold text-gray-900 dark:text-gray-100 text-sm">Dexter</span>
-                <span className="text-gray-400 text-[11px]">Dexter@gmail.com</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100 text-sm">
+                  Dexter
+                </span>
+                <span className="text-gray-400 text-[11px]">
+                  Dexter@gmail.com
+                </span>
               </div>
 
               {/* Menu Items */}
@@ -77,7 +82,11 @@ export function Sidebar() {
                 {/* Change Theme */}
                 <div className="relative">
                   <button
-                    onClick={() => setActiveSubmenu(activeSubmenu === "theme" ? null : "theme")}
+                    onClick={() =>
+                      setActiveSubmenu(
+                        activeSubmenu === "theme" ? null : "theme"
+                      )
+                    }
                     className="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                   >
                     <div className="flex items-center gap-2">
@@ -98,7 +107,9 @@ export function Sidebar() {
                           <Sun className="w-3.5 h-3.5" />
                           <span>Light</span>
                         </div>
-                        {theme === "light" && <Check className="w-3.5 h-3.5" />}
+                        {theme === "light" && (
+                          <Check className="w-3.5 h-3.5" />
+                        )}
                       </button>
 
                       <button
@@ -109,7 +120,9 @@ export function Sidebar() {
                           <Moon className="w-3.5 h-3.5" />
                           <span>Dark</span>
                         </div>
-                        {theme === "dark" && <Check className="w-3.5 h-3.5" />}
+                        {theme === "dark" && (
+                          <Check className="w-3.5 h-3.5" />
+                        )}
                       </button>
                     </div>
                   )}
@@ -118,11 +131,20 @@ export function Sidebar() {
                 {/* Color Mode */}
                 <div className="relative">
                   <button
-                    onClick={() => setActiveSubmenu(activeSubmenu === "color" ? null : "color")}
+                    onClick={() =>
+                      setActiveSubmenu(
+                        activeSubmenu === "color" ? null : "color"
+                      )
+                    }
                     className="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                   >
                     <div className="flex items-center gap-2">
-                      <div className={`w-3.5 h-3.5 rounded-sm ${colorOptions.find(c => c.name === colorMode)?.class || 'bg-blue-600'}`} />
+                      <div
+                        className={`w-3.5 h-3.5 rounded-sm ${
+                          colorOptions.find((c) => c.name === colorMode)
+                            ?.class || "bg-blue-600"
+                        }`}
+                      />
                       <span>Color Mode</span>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
@@ -141,18 +163,24 @@ export function Sidebar() {
                             <span className={`w-3 h-3 rounded-sm ${item.class}`} />
                             <span>{item.name}</span>
                           </div>
-                          {colorMode === item.name && <Check className="w-3.5 h-3.5" />}
+                          {colorMode === item.name && (
+                            <Check className="w-3.5 h-3.5" />
+                          )}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
 
-                {/* Settings */}
-                <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                {/* Settings Link */}
+                <Link
+                  href="/settings"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                >
                   <Settings className="w-3.5 h-3.5 text-gray-500" />
                   <span>Settings</span>
-                </button>
+                </Link>
               </div>
             </div>
           )}
@@ -164,21 +192,21 @@ export function Sidebar() {
             Workspace
           </div>
 
-          <a
+          <Link
             href="/"
             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-medium text-xs"
           >
             <CheckSquare className="w-4 h-4" />
             <span>Tasks</span>
-          </a>
+          </Link>
 
-          <a
-            href="#"
+          <Link
+            href="/"
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium transition-colors"
           >
             <FolderKanban className="w-4 h-4" />
             <span>Projects</span>
-          </a>
+          </Link>
         </div>
       </div>
     </aside>
