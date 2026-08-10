@@ -1,4 +1,5 @@
 import Sidebar from "@/components/Sidebar";
+import TaskCard from "@/components/TaskCard";
 
 const columns = [
   {
