@@ -2,19 +2,27 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Navbar } from "@/components/layout/navbar";
+import { Sidebar } from "@/components/layout/sidebar";
 import { TaskCard, Task } from "@/components/tasks/task-card";
-import { TaskModal } from "@/components/tasks/task-modal";
-import { Plus } from "lucide-react";
+import { Search, SlidersHorizontal, Plus, Filter, Columns } from "lucide-react";
 
 const API_URL = "http://localhost:5000/tasks";
 
-export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+// Fallback dummy data image match ke liye
+const defaultTasks: Task[] = [
+  { id: "1", title: "Write API Documentation", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "TODO" },
+  { id: "2", title: "Implement Search Function", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "TODO" },
+  { id: "3", title: "Deploy to Production", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "TODO" },
+  { id: "4", title: "Code Review Completed", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "DOING" },
+  { id: "5", title: "Design Mockups Finalized", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "DOING" },
+  { id: "6", title: "Feature Testing Passed", assignee: "QA Team", dueDate: "30 Jul", tags: ["Testing", "Passed"], status: "COMPLETED" },
+  { id: "7", title: "UI Design Updated", assignee: "Designer", dueDate: "31 Jul", tags: ["Design", "Updated"], status: "COMPLETED" },
+  { id: "8", title: "Security Audit Scheduled", assignee: "Security", dueDate: "01 Aug", tags: ["Audit", "Scheduled"], status: "COMPLETED" },
+];
 
-  // 1. Check guest login & redirect inside component body
+export default function Home() {
+  const [tasks, setTasks] = useState<Task[]>(defaultTasks);
+
   useEffect(() => {
     const isGuest = localStorage.getItem("user_mode");
     if (!isGuest) {
@@ -22,101 +30,82 @@ export default function Home() {
     }
   }, []);
 
-  // 2. Fetch tasks from NestJS Backend
-  const fetchTasks = async () => {
-    try {
-      const res = await axios.get(API_URL);
-      const mappedTasks = res.data.map((t: any) => ({
-        ...t,
-        id: t._id || t.id,
-      }));
-      setTasks(mappedTasks);
-    } catch (err) {
-      console.error("Error fetching tasks:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  // 3. Create Task via API
-  const handleCreateTask = async (taskData: Omit<Task, "id">) => {
-    try {
-      const res = await axios.post(API_URL, taskData);
-      const createdTask = { ...res.data, id: res.data._id || res.data.id };
-      setTasks((prev) => [createdTask, ...prev]);
-    } catch (err) {
-      console.error("Error creating task:", err);
-    }
-  };
-
   const columns = [
     { title: "To Do", status: "TODO" },
-    { title: "In Progress", status: "IN_PROGRESS" },
+    { title: "Doing", status: "DOING" },
     { title: "Completed", status: "COMPLETED" },
+    { title: "On Hold", status: "ON_HOLD" },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      <Navbar />
+    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950 flex text-gray-900 dark:text-gray-100">
+      {/* Sidebar */}
+      <Sidebar />
 
-      <main className="p-6 flex-1 max-w-7xl w-full mx-auto">
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col p-6 overflow-x-auto">
+        {/* Top Header Controls */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Task Board</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Manage and track your project tasks live</p>
-          </div>
+          <h1 className="text-xl font-bold">Tasks</h1>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Task</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+              <Search className="w-4 h-4 text-gray-500" />
+            </button>
+            <button className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800">
+              <Columns className="w-3.5 h-3.5 text-gray-500" />
+              <span>Fields</span>
+            </button>
+            <button className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+              <Filter className="w-4 h-4 text-gray-500" />
+            </button>
+
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-90">
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Task</span>
+            </button>
+          </div>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading tasks...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {columns.map((col) => {
-              const colTasks = tasks.filter((t) => t.status === col.status);
+        {/* Board Grid Columns */}
+        <div className="grid grid-cols-4 gap-4 min-w-[1000px]">
+          {columns.map((col) => {
+            const colTasks = tasks.filter((t) => t.status === col.status);
 
-              return (
-                <div
-                  key={col.status}
-                  className="bg-gray-100/60 dark:bg-gray-900/40 p-4 rounded-2xl border border-gray-200/80 dark:border-gray-800/80 flex flex-col gap-4"
-                >
-                  <div className="flex items-center justify-between px-1">
-                    <h2 className="font-semibold text-gray-700 dark:text-gray-300 text-sm">
+            return (
+              <div
+                key={col.status}
+                className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-2xl border border-gray-200/50 dark:border-gray-800 flex flex-col gap-3 min-h-[500px]"
+              >
+                {/* Column Header */}
+                <div className="flex items-center justify-between px-1 py-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
                       {col.title}
-                    </h2>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium">
-                      {colTasks.length}
                     </span>
                   </div>
-
-                  <div className="flex flex-col gap-3">
-                    {colTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} />
-                    ))}
+                  <div className="flex items-center gap-1 text-gray-400">
+                    <Plus className="w-3.5 h-3.5 cursor-pointer hover:text-gray-600" />
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </main>
 
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateTask}
-      />
+                {/* Cards List */}
+                <div className="flex flex-col gap-3 flex-1">
+                  {colTasks.map((task) => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                </div>
+
+                {/* Bottom Add Task Button */}
+                <button className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 font-medium transition-colors">
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Task</span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </main>
     </div>
   );
 }
