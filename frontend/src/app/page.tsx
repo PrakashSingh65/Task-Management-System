@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TaskCard, Task } from "@/components/tasks/task-card";
+import { TaskDetailModal } from "@/components/tasks/task-detail-modal";
 import {
   Search,
   Plus,
@@ -28,6 +29,10 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
   const [isFieldsOpen, setIsFieldsOpen] = useState(false);
 
+  // 1. New State for Search & Modal
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+
   // Fields Toggle State
   const [fields, setFields] = useState({
     priority: true,
@@ -49,6 +54,11 @@ export default function Home() {
     setFields((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // 2. Filter tasks based on Search Input
+  const filteredTasks = tasks.filter((t) =>
+    t.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const columns = [
     { title: "To Do", status: "TODO" },
     { title: "Doing", status: "DOING" },
@@ -62,13 +72,21 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col p-6 overflow-x-auto relative">
         {/* Top Header Controls */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-4">
           <h1 className="text-xl font-bold">Tasks</h1>
 
-          <div className="flex items-center gap-2 relative">
-            <button className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-              <Search className="w-4 h-4 text-gray-500" />
-            </button>
+          <div className="flex items-center gap-2 relative flex-1 justify-end">
+            {/* 3. Search Input Component */}
+            <div className="relative max-w-xs w-full">
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search tasks... (⌘F)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-xl text-xs bg-white dark:bg-gray-900 outline-none focus:border-gray-400 transition-colors"
+              />
+            </div>
 
             {/* Fields Button with Popover */}
             <div className="relative">
@@ -80,10 +98,8 @@ export default function Home() {
                 <span>Fields</span>
               </button>
 
-              {/* Fields Dropdown Menu */}
               {isFieldsOpen && (
                 <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-3 z-50 flex flex-col gap-2 text-xs">
-                  {/* View Switcher Inside Dropdown */}
                   <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl mb-1">
                     <button
                       onClick={() => setViewMode("list")}
@@ -140,12 +156,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Dynamic View Toggle: Board or List */}
+        {/* Dynamic View Toggle */}
         {viewMode === "board" ? (
           /* Board View */
           <div className="grid grid-cols-4 gap-4 min-w-[1000px]">
             {columns.map((col) => {
-              const colTasks = tasks.filter((t) => t.status === col.status);
+              const colTasks = filteredTasks.filter((t) => t.status === col.status);
               return (
                 <div
                   key={col.status}
@@ -160,7 +176,10 @@ export default function Home() {
 
                   <div className="flex flex-col gap-3 flex-1">
                     {colTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} />
+                      /* 4. Click Handler on Board Card */
+                      <div key={task.id} onClick={() => setSelectedTask(task)} className="cursor-pointer">
+                        <TaskCard task={task} />
+                      </div>
                     ))}
                   </div>
 
@@ -176,7 +195,7 @@ export default function Home() {
           /* List View (Table Mode) */
           <div className="flex flex-col gap-6">
             {columns.map((col) => {
-              const colTasks = tasks.filter((t) => t.status === col.status);
+              const colTasks = filteredTasks.filter((t) => t.status === col.status);
               return (
                 <div key={col.status} className="flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
@@ -198,7 +217,12 @@ export default function Home() {
                       <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                         {colTasks.length > 0 ? (
                           colTasks.map((task) => (
-                            <tr key={task.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                            /* 5. Click Handler on Table Row */
+                            <tr
+                              key={task.id}
+                              onClick={() => setSelectedTask(task)}
+                              className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 cursor-pointer"
+                            >
                               <td className="py-3 px-4 font-medium text-gray-800 dark:text-gray-200">
                                 {task.title}
                               </td>
@@ -238,10 +262,7 @@ export default function Home() {
                           ))
                         ) : (
                           <tr>
-                            <td
-                              colSpan={2 + Number(fields.priority) + Number(fields.members) + Number(fields.dueDate)}
-                              className="py-3 px-4 text-center text-gray-400"
-                            >
+                            <td colSpan={5} className="py-3 px-4 text-center text-gray-400">
                               No tasks in {col.title}
                             </td>
                           </tr>
@@ -255,6 +276,13 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* 6. Detail Modal Component Rendering */}
+      <TaskDetailModal
+        isOpen={!!selectedTask}
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+      />
     </div>
   );
 }
