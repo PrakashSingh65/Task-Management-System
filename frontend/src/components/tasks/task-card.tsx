@@ -1,36 +1,56 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { Calendar, MoreHorizontal } from "lucide-react";
 
 export interface Task {
   id: string;
   title: string;
-  description?: string;
-  status: "TODO" | "IN_PROGRESS" | "COMPLETED";
-  priority: "LOW" | "MEDIUM" | "HIGH";
+  assignee?: string;
   dueDate?: string;
+  tags?: string[];
+  status: "TODO" | "DOING" | "COMPLETED" | "ON_HOLD";
 }
 
 export function TaskCard({ task }: { task: Task }) {
-  const priorityColors = {
-    LOW: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400",
-    MEDIUM: "bg-amber-50 dark:bg-amber-950/50 text-amber-600 border-amber-200",
-    HIGH: "bg-rose-50 dark:bg-rose-950/50 text-rose-600 border-rose-200",
-  };
-
   return (
-    <div className="p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-3">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${priorityColors[task.priority]}`}>
-          {task.priority}
-        </span>
+        <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100">
+          {task.title}
+        </h3>
+        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <MoreHorizontal className="w-4 h-4" />
+        </button>
       </div>
-      <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{task.title}</h3>
-      {task.description && <p className="text-xs text-gray-500 dark:text-gray-400">{task.description}</p>}
-      {task.dueDate && (
-        <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1">
-          <Clock className="h-3.5 w-3.5" />
-          <span>{task.dueDate}</span>
+
+      {/* Assignee & Date */}
+      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-medium">
+            {(task.assignee || "A")[0]}
+          </div>
+          <span>{task.assignee || "Admin"}</span>
+        </div>
+
+        {task.dueDate && (
+          <div className="flex items-center gap-1 text-red-500 font-medium bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-md text-[11px]">
+            <Calendar className="w-3 h-3" />
+            <span>{task.dueDate}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Tags */}
+      {task.tags && task.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {task.tags.map((tag, idx) => (
+            <span
+              key={idx}
+              className="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium flex items-center gap-1"
+            >
+              <span className="text-gray-400">🏷️</span> {tag}
+            </span>
+          ))}
         </div>
       )}
     </div>
