@@ -9,6 +9,7 @@ export interface Task {
   dueDate?: string;
   tags?: string[];
   status: "TODO" | "DOING" | "COMPLETED" | "ON_HOLD";
+  priority?: "High" | "Medium" | "Low";
 }
 
 export function TaskCard({ task }: { task: Task }) {

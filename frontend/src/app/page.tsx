@@ -1,27 +1,42 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TaskCard, Task } from "@/components/tasks/task-card";
-import { Search, SlidersHorizontal, Plus, Filter, Columns } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Filter,
+  Columns,
+  List as ListIcon,
+  LayoutGrid,
+  MoreHorizontal,
+  ChevronDown,
+} from "lucide-react";
 
-const API_URL = "http://localhost:5000/tasks";
-
-// Fallback dummy data image match ke liye
 const defaultTasks: Task[] = [
-  { id: "1", title: "Write API Documentation", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "TODO" },
-  { id: "2", title: "Implement Search Function", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "TODO" },
-  { id: "3", title: "Deploy to Production", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "TODO" },
-  { id: "4", title: "Code Review Completed", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "DOING" },
-  { id: "5", title: "Design Mockups Finalized", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment", "Deployment"], status: "DOING" },
-  { id: "6", title: "Feature Testing Passed", assignee: "QA Team", dueDate: "30 Jul", tags: ["Testing", "Passed"], status: "COMPLETED" },
-  { id: "7", title: "UI Design Updated", assignee: "Designer", dueDate: "31 Jul", tags: ["Design", "Updated"], status: "COMPLETED" },
-  { id: "8", title: "Security Audit Scheduled", assignee: "Security", dueDate: "01 Aug", tags: ["Audit", "Scheduled"], status: "COMPLETED" },
+  { id: "1", title: "Write API Documentation", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "TODO", priority: "High" },
+  { id: "2", title: "Implement Search Function", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "TODO", priority: "Low" },
+  { id: "3", title: "Deploy to Production", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "TODO", priority: "Medium" },
+  { id: "4", title: "Code Review Completed", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "DOING", priority: "High" },
+  { id: "5", title: "Design Mockups Finalized", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "DOING", priority: "Medium" },
+  { id: "6", title: "Feature Testing Passed", assignee: "QA Team", dueDate: "30 Jul", tags: ["Testing"], status: "COMPLETED", priority: "High" },
 ];
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>(defaultTasks);
+  const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  const [isFieldsOpen, setIsFieldsOpen] = useState(false);
+
+  // Fields Toggle State
+  const [fields, setFields] = useState({
+    priority: true,
+    members: true,
+    dueDate: true,
+    labels: false,
+    status: false,
+    reporter: false,
+  });
 
   useEffect(() => {
     const isGuest = localStorage.getItem("user_mode");
@@ -29,6 +44,10 @@ export default function Home() {
       window.location.href = "/login";
     }
   }, []);
+
+  const toggleField = (key: keyof typeof fields) => {
+    setFields((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const columns = [
     { title: "To Do", status: "TODO" },
@@ -39,23 +58,77 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950 flex text-gray-900 dark:text-gray-100">
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col p-6 overflow-x-auto">
+      <main className="flex-1 flex flex-col p-6 overflow-x-auto relative">
         {/* Top Header Controls */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold">Tasks</h1>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 relative">
             <button className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
               <Search className="w-4 h-4 text-gray-500" />
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800">
-              <Columns className="w-3.5 h-3.5 text-gray-500" />
-              <span>Fields</span>
-            </button>
+
+            {/* Fields Button with Popover */}
+            <div className="relative">
+              <button
+                onClick={() => setIsFieldsOpen(!isFieldsOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <Columns className="w-3.5 h-3.5 text-gray-500" />
+                <span>Fields</span>
+              </button>
+
+              {/* Fields Dropdown Menu */}
+              {isFieldsOpen && (
+                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-3 z-50 flex flex-col gap-2 text-xs">
+                  {/* View Switcher Inside Dropdown */}
+                  <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl mb-1">
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        viewMode === "list"
+                          ? "bg-white dark:bg-gray-700 shadow-sm text-black dark:text-white"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      <ListIcon className="w-3.5 h-3.5" />
+                      List
+                    </button>
+                    <button
+                      onClick={() => setViewMode("board")}
+                      className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        viewMode === "board"
+                          ? "bg-white dark:bg-gray-700 shadow-sm text-black dark:text-white"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      Board
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+                    {Object.entries(fields).map(([key, enabled]) => (
+                      <label
+                        key={key}
+                        className="flex items-center justify-between cursor-pointer capitalize py-0.5 text-gray-700 dark:text-gray-300"
+                      >
+                        <span>{key.replace(/([A-Z])/g, " $1")}</span>
+                        <input
+                          type="checkbox"
+                          checked={enabled}
+                          onChange={() => toggleField(key as keyof typeof fields)}
+                          className="rounded border-gray-300 text-black focus:ring-black dark:border-gray-700 dark:bg-gray-800"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
               <Filter className="w-4 h-4 text-gray-500" />
             </button>
@@ -67,44 +140,120 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Board Grid Columns */}
-        <div className="grid grid-cols-4 gap-4 min-w-[1000px]">
-          {columns.map((col) => {
-            const colTasks = tasks.filter((t) => t.status === col.status);
-
-            return (
-              <div
-                key={col.status}
-                className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-2xl border border-gray-200/50 dark:border-gray-800 flex flex-col gap-3 min-h-[500px]"
-              >
-                {/* Column Header */}
-                <div className="flex items-center justify-between px-1 py-1">
-                  <div className="flex items-center gap-2">
+        {/* Dynamic View Toggle: Board or List */}
+        {viewMode === "board" ? (
+          /* Board View */
+          <div className="grid grid-cols-4 gap-4 min-w-[1000px]">
+            {columns.map((col) => {
+              const colTasks = tasks.filter((t) => t.status === col.status);
+              return (
+                <div
+                  key={col.status}
+                  className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-2xl border border-gray-200/50 dark:border-gray-800 flex flex-col gap-3 min-h-[500px]"
+                >
+                  <div className="flex items-center justify-between px-1 py-1">
                     <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
                       {col.title}
                     </span>
+                    <Plus className="w-3.5 h-3.5 text-gray-400 cursor-pointer hover:text-gray-600" />
                   </div>
-                  <div className="flex items-center gap-1 text-gray-400">
-                    <Plus className="w-3.5 h-3.5 cursor-pointer hover:text-gray-600" />
+
+                  <div className="flex flex-col gap-3 flex-1">
+                    {colTasks.map((task) => (
+                      <TaskCard key={task.id} task={task} />
+                    ))}
+                  </div>
+
+                  <button className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 font-medium">
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Task</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* List View (Table Mode) */
+          <div className="flex flex-col gap-6">
+            {columns.map((col) => {
+              const colTasks = tasks.filter((t) => t.status === col.status);
+              return (
+                <div key={col.status} className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                    <span>{col.title}</span>
+                  </div>
+
+                  <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-gray-900">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-400 border-b border-gray-100 dark:border-gray-800">
+                        <tr>
+                          <th className="py-2.5 px-4 font-normal">Task</th>
+                          {fields.priority && <th className="py-2.5 px-4 font-normal">Priority</th>}
+                          {fields.members && <th className="py-2.5 px-4 font-normal">Members</th>}
+                          {fields.dueDate && <th className="py-2.5 px-4 font-normal">Due Date</th>}
+                          <th className="py-2.5 px-4 font-normal text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {colTasks.length > 0 ? (
+                          colTasks.map((task) => (
+                            <tr key={task.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                              <td className="py-3 px-4 font-medium text-gray-800 dark:text-gray-200">
+                                {task.title}
+                              </td>
+                              {fields.priority && (
+                                <td className="py-3 px-4">
+                                  <span
+                                    className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                                      task.priority === "High"
+                                        ? "text-red-600 bg-red-50 dark:bg-red-950/50"
+                                        : task.priority === "Medium"
+                                        ? "text-orange-600 bg-orange-50 dark:bg-orange-950/50"
+                                        : "text-blue-600 bg-blue-50 dark:bg-blue-950/50"
+                                    }`}
+                                  >
+                                    📶 {task.priority || "Low"}
+                                  </span>
+                                </td>
+                              )}
+                              {fields.members && (
+                                <td className="py-3 px-4">
+                                  <div className="w-5 h-5 rounded-full bg-purple-600 text-white flex items-center justify-center text-[10px] font-bold">
+                                    {(task.assignee || "A")[0]}
+                                  </div>
+                                </td>
+                              )}
+                              {fields.dueDate && (
+                                <td className="py-3 px-4 text-gray-500">
+                                  {task.dueDate || "12 Sep 2026"}
+                                </td>
+                              )}
+                              <td className="py-3 px-4 text-right">
+                                <button className="text-gray-400 hover:text-gray-600">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={2 + Number(fields.priority) + Number(fields.members) + Number(fields.dueDate)}
+                              className="py-3 px-4 text-center text-gray-400"
+                            >
+                              No tasks in {col.title}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-
-                {/* Cards List */}
-                <div className="flex flex-col gap-3 flex-1">
-                  {colTasks.map((task) => (
-                    <TaskCard key={task.id} task={task} />
-                  ))}
-                </div>
-
-                {/* Bottom Add Task Button */}
-                <button className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 font-medium transition-colors">
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Task</span>
-                </button>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </main>
     </div>
   );
