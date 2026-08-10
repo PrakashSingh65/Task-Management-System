@@ -13,6 +13,8 @@ export default function TaskCard({
 }: TaskCardProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      
+      {/* Task title */}
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-medium text-gray-900">
           {title}
@@ -23,7 +25,9 @@ export default function TaskCard({
         </button>
       </div>
 
+      {/* User and date */}
       <div className="mt-3 flex items-center justify-between">
+        
         <div className="flex items-center gap-2">
           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 text-[9px] font-semibold text-white">
             A
@@ -39,11 +43,13 @@ export default function TaskCard({
         </span>
       </div>
 
+      {/* Label */}
       <div className="mt-3 flex flex-wrap gap-1">
         <span className="rounded-full border border-gray-200 px-2 py-1 text-[10px] text-gray-500">
           {label}
         </span>
       </div>
+
     </div>
   );
 }
