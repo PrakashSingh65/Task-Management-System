@@ -13,23 +13,39 @@ import {
   LayoutGrid,
   MoreHorizontal,
   ChevronDown,
+  ChevronRight,
+  Circle,
+  BarChart2,
+  Users,
+  Calendar,
+  Tag,
+  UserCheck,
+  Check,
 } from "lucide-react";
 
 const defaultTasks: Task[] = [
-  { id: "1", title: "Write API Documentation", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "TODO", priority: "High" },
-  { id: "2", title: "Implement Search Function", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "TODO", priority: "Low" },
-  { id: "3", title: "Deploy to Production", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "TODO", priority: "Medium" },
-  { id: "4", title: "Code Review Completed", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "DOING", priority: "High" },
-  { id: "5", title: "Design Mockups Finalized", assignee: "Admin", dueDate: "29 Jul", tags: ["Deployment"], status: "DOING", priority: "Medium" },
-  { id: "6", title: "Feature Testing Passed", assignee: "QA Team", dueDate: "30 Jul", tags: ["Testing"], status: "COMPLETED", priority: "High" },
+  { id: "1", title: "Design Homepage", assignee: "Admin", dueDate: "12 Sep 2026", tags: ["Design"], status: "TODO", priority: "High" },
+  { id: "2", title: "Develop Login Feature", assignee: "CN", dueDate: "15 Sep 2026", tags: ["Development"], status: "TODO", priority: "Low" },
+  { id: "3", title: "Test Payment Gateway", assignee: "QA", dueDate: "18 Sep 2026", tags: ["Testing"], status: "TODO", priority: "Medium" },
+  { id: "4", title: "Design Homepage", assignee: "Admin", dueDate: "12 Sep 2026", tags: ["Design"], status: "DOING", priority: "High" },
+  { id: "5", title: "Develop Login Feature", assignee: "CN", dueDate: "15 Sep 2026", tags: ["Development"], status: "DOING", priority: "Low" },
+  { id: "6", title: "Test Payment Gateway", assignee: "QA", dueDate: "18 Sep 2026", tags: ["Testing"], status: "DOING", priority: "Medium" },
+  { id: "7", title: "Design Homepage", assignee: "Admin", dueDate: "12 Sep 2026", tags: ["Design"], status: "COMPLETED", priority: "High" },
+  { id: "8", title: "Develop Login Feature", assignee: "CN", dueDate: "15 Sep 2026", tags: ["Development"], status: "COMPLETED", priority: "Low" },
+  { id: "9", title: "Test Payment Gateway", assignee: "QA", dueDate: "18 Sep 2026", tags: ["Testing"], status: "COMPLETED", priority: "Medium" },
 ];
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>(defaultTasks);
-  const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  const [viewMode, setViewMode] = useState<"board" | "list">("list");
   const [isFieldsOpen, setIsFieldsOpen] = useState(false);
+  
+  // Filter Dropdown & Submenu state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilterSubmenu, setActiveFilterSubmenu] = useState<string | null>(null);
+  const [selectedPriorityFilter, setSelectedPriorityFilter] = useState<string | null>(null);
 
-  // 1. New State for Search & Modal
+  // Search & Modal State
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTask, setSelectedTask] = useState<any>(null);
 
@@ -54,16 +70,19 @@ export default function Home() {
     setFields((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // 2. Filter tasks based on Search Input
-  const filteredTasks = tasks.filter((t) =>
-    t.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter tasks based on Search Input & Selected Priority Filter
+  const filteredTasks = tasks.filter((t) => {
+    const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPriority = selectedPriorityFilter
+      ? t.priority?.toLowerCase() === selectedPriorityFilter.toLowerCase()
+      : true;
+    return matchesSearch && matchesPriority;
+  });
 
   const columns = [
     { title: "To Do", status: "TODO" },
     { title: "Doing", status: "DOING" },
     { title: "Completed", status: "COMPLETED" },
-    { title: "On Hold", status: "ON_HOLD" },
   ];
 
   return (
@@ -71,17 +90,26 @@ export default function Home() {
       <Sidebar />
 
       <main className="flex-1 flex flex-col p-6 overflow-x-auto relative">
+        {/* Top Navigation & Breadcrumbs Header */}
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-gray-800 text-xs text-gray-500">
+          <div className="flex items-center gap-2">
+            <span className="cursor-pointer hover:text-black dark:hover:text-white">Projects</span>
+            <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+            <span className="font-semibold text-gray-900 dark:text-gray-100">Design Homepage</span>
+          </div>
+        </div>
+
         {/* Top Header Controls */}
         <div className="flex items-center justify-between mb-6 gap-4">
           <h1 className="text-xl font-bold">Tasks</h1>
 
           <div className="flex items-center gap-2 relative flex-1 justify-end">
-            {/* 3. Search Input Component */}
+            {/* Search Input */}
             <div className="relative max-w-xs w-full">
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search tasks... (⌘F)"
+                placeholder="Search tasks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-xl text-xs bg-white dark:bg-gray-900 outline-none focus:border-gray-400 transition-colors"
@@ -91,7 +119,10 @@ export default function Home() {
             {/* Fields Button with Popover */}
             <div className="relative">
               <button
-                onClick={() => setIsFieldsOpen(!isFieldsOpen)}
+                onClick={() => {
+                  setIsFieldsOpen(!isFieldsOpen);
+                  setIsFilterOpen(false);
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <Columns className="w-3.5 h-3.5 text-gray-500" />
@@ -145,9 +176,133 @@ export default function Home() {
               )}
             </div>
 
-            <button className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-              <Filter className="w-4 h-4 text-gray-500" />
-            </button>
+            {/* Filter Button with Submenus Popover */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsFilterOpen(!isFilterOpen);
+                  setIsFieldsOpen(false);
+                  setActiveFilterSubmenu(null);
+                }}
+                className={`p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                  selectedPriorityFilter ? "bg-gray-100 dark:bg-gray-800 border-black" : ""
+                }`}
+              >
+                <Filter className="w-4 h-4 text-gray-500" />
+              </button>
+
+              {/* Main Filter Popover Menu */}
+              {isFilterOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl p-2 z-50 text-xs space-y-1">
+                  {/* Status */}
+                  <button
+                    onClick={() => setActiveFilterSubmenu(activeFilterSubmenu === "Status" ? null : "Status")}
+                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Circle className="w-3.5 h-3.5 text-gray-400" />
+                      <span>Status</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
+
+                  {/* Priority with Submenu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setActiveFilterSubmenu(activeFilterSubmenu === "Priority" ? null : "Priority")}
+                      className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium"
+                    >
+                      <div className="flex items-center gap-2">
+                        <BarChart2 className="w-3.5 h-3.5 text-gray-400" />
+                        <span>Priority</span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                    </button>
+
+                    {/* Priority Submenu Popover */}
+                    {activeFilterSubmenu === "Priority" && (
+                      <div className="absolute right-full top-0 mr-2 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl p-1.5 z-50 space-y-0.5">
+                        {["No Priority", "Urgent", "High", "Medium", "Low"].map((p) => {
+                          const isSelected = selectedPriorityFilter?.toLowerCase() === p.toLowerCase();
+                          return (
+                            <button
+                              key={p}
+                              onClick={() => {
+                                setSelectedPriorityFilter(isSelected ? null : p);
+                                setIsFilterOpen(false);
+                              }}
+                              className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-left"
+                            >
+                              <span
+                                className={
+                                  p === "Urgent"
+                                    ? "text-red-500 font-medium"
+                                    : p === "High"
+                                    ? "text-orange-500 font-medium"
+                                    : p === "Medium"
+                                    ? "text-yellow-600 font-medium"
+                                    : p === "Low"
+                                    ? "text-blue-500 font-medium"
+                                    : "text-gray-500"
+                                }
+                              >
+                                {p === "No Priority" ? "• " + p : "📶 " + p}
+                              </span>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-black dark:text-white" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Members */}
+                  <button className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-3.5 h-3.5 text-gray-400" />
+                      <span>Members</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
+
+                  {/* Due Date */}
+                  <button className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                      <span>Due Date</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
+
+                  {/* Teams */}
+                  <button className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-3.5 h-3.5 text-gray-400" />
+                      <span>Teams</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
+
+                  {/* Labels */}
+                  <button className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-3.5 h-3.5 text-gray-400" />
+                      <span>Labels</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
+
+                  {/* Reporter */}
+                  <button className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="w-3.5 h-3.5 text-gray-400" />
+                      <span>Reporter</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
+                </div>
+              )}
+            </div>
 
             <button className="flex items-center gap-1.5 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-90">
               <Plus className="w-3.5 h-3.5" />
@@ -159,7 +314,7 @@ export default function Home() {
         {/* Dynamic View Toggle */}
         {viewMode === "board" ? (
           /* Board View */
-          <div className="grid grid-cols-4 gap-4 min-w-[1000px]">
+          <div className="grid grid-cols-3 gap-4 min-w-[900px]">
             {columns.map((col) => {
               const colTasks = filteredTasks.filter((t) => t.status === col.status);
               return (
@@ -176,7 +331,6 @@ export default function Home() {
 
                   <div className="flex flex-col gap-3 flex-1">
                     {colTasks.map((task) => (
-                      /* 4. Click Handler on Board Card */
                       <div key={task.id} onClick={() => setSelectedTask(task)} className="cursor-pointer">
                         <TaskCard task={task} />
                       </div>
@@ -192,7 +346,7 @@ export default function Home() {
             })}
           </div>
         ) : (
-          /* List View (Table Mode) */
+          /* List View Categorized Mode */
           <div className="flex flex-col gap-6">
             {columns.map((col) => {
               const colTasks = filteredTasks.filter((t) => t.status === col.status);
@@ -217,7 +371,6 @@ export default function Home() {
                       <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                         {colTasks.length > 0 ? (
                           colTasks.map((task) => (
-                            /* 5. Click Handler on Table Row */
                             <tr
                               key={task.id}
                               onClick={() => setSelectedTask(task)}
@@ -269,6 +422,12 @@ export default function Home() {
                         )}
                       </tbody>
                     </table>
+                    <div className="p-2 bg-gray-50/30 dark:bg-gray-800/20 border-t border-gray-100 dark:border-gray-800">
+                      <button className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-black dark:hover:text-white font-medium">
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Task</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -277,7 +436,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* 6. Detail Modal Component Rendering */}
+      {/* Task Detail Modal */}
       <TaskDetailModal
         isOpen={!!selectedTask}
         task={selectedTask}
