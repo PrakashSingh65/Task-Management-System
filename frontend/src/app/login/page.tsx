@@ -1,16 +1,54 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Pyramids } from "lucide-react"; // Ya koi bhi logo icon
+import { loginUser, guestLoginUser } from "@/lib/api";
+import { LogIn, UserCheck } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleGuestLogin = () => {
-    // Guest token/user set karke dashboard par redirect karein
-    localStorage.setItem("user_mode", "guest");
-    router.push("/");
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setError("Please enter your email");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const data = await loginUser(email, password);
+      localStorage.setItem("user_token", data.accessToken);
+      localStorage.setItem("user_mode", "user");
+      localStorage.setItem("user_email", data.user?.email || email);
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message || "Failed to log in");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await guestLoginUser();
+      localStorage.setItem("user_token", data.accessToken);
+      localStorage.setItem("user_mode", "guest");
+      localStorage.setItem("user_email", "guest@example.com");
+      router.push("/");
+    } catch (err: any) {
+      localStorage.setItem("user_mode", "guest");
+      router.push("/");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,16 +68,70 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Let's get back on track
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-          Enter your email below to login to your account.
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          Enter your credentials below to log in to your account.
         </p>
+
+        {error && (
+          <div className="w-full mb-4 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-600 dark:text-red-400 text-left">
+            {error}
+          </div>
+        )}
+
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="w-full space-y-4 mb-4">
+          <div className="text-left space-y-1">
+            <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+              Email Address
+            </label>
+            <input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+            />
+          </div>
+
+          <div className="text-left space-y-1">
+            <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+            />
+          </div>
+
+          {/* Log In Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 px-4 bg-black hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 text-white font-medium rounded-full text-sm transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>{loading ? "Logging in..." : "Log In"}</span>
+          </button>
+        </form>
+
+        <div className="relative w-full my-4 flex items-center justify-center">
+          <div className="border-t border-gray-200 dark:border-gray-800 w-full absolute" />
+          <span className="bg-white dark:bg-gray-900 px-3 text-xs text-gray-400 relative">
+            OR
+          </span>
+        </div>
 
         {/* Continue as Guest Button */}
         <button
           onClick={handleGuestLogin}
-          className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 text-white font-medium rounded-full text-sm transition-all mb-3 shadow-sm"
+          disabled={loading}
+          className="w-full py-3 px-4 border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-800 dark:text-gray-200 font-medium rounded-full text-sm transition-all mb-3 flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          Continue as Guest
+          <UserCheck className="w-4 h-4" />
+          <span>Continue as Guest</span>
         </button>
 
         {/* Google Login Button */}

@@ -5,11 +5,12 @@ import { Calendar, MoreHorizontal } from "lucide-react";
 export interface Task {
   id: string;
   title: string;
+  description?: string;
   assignee?: string;
   dueDate?: string;
   tags?: string[];
-  status: "TODO" | "DOING" | "COMPLETED" | "ON_HOLD";
-  priority?: "High" | "Medium" | "Low";
+  status: "TODO" | "DOING" | "COMPLETED" | "ON_HOLD" | "IN_PROGRESS";
+  priority?: "High" | "Medium" | "Low" | "HIGH" | "MEDIUM" | "LOW";
 }
 
 export function TaskCard({ task }: { task: Task }) {

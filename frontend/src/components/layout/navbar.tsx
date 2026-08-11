@@ -1,9 +1,31 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Search, UserCheck } from "lucide-react";
+import { Search, UserCheck, LogOut, LogIn } from "lucide-react";
+import { logoutUser } from "@/lib/api";
 
 export function Navbar() {
+  const router = useRouter();
+  const [userMode, setUserMode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const mode = localStorage.getItem("user_mode");
+    setUserMode(mode || "guest");
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (e) {}
+    localStorage.removeItem("user_token");
+    localStorage.removeItem("user_mode");
+    localStorage.removeItem("user_email");
+    setUserMode(null);
+    router.push("/login");
+  };
+
   return (
     <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 flex items-center justify-between sticky top-0 z-10">
       <div className="relative w-72">
@@ -19,8 +41,17 @@ export function Navbar() {
         <ThemeToggle />
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-sm font-medium border border-blue-200 dark:border-blue-800">
           <UserCheck className="h-4 w-4" />
-          <span>Guest User</span>
+          <span>{userMode === "user" ? "Logged In User" : "Guest User"}</span>
         </div>
+
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900 transition-colors"
+          title="Log Out"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span>Log Out</span>
+        </button>
       </div>
     </header>
   );

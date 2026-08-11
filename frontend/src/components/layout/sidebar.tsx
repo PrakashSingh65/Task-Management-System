@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { logoutUser } from "@/lib/api";
 import {
   Check,
   ChevronRight,
   Sun,
   Moon,
-  Palette,
   Settings,
   ChevronsUpDown,
   CheckSquare,
   FolderKanban,
+  LogOut,
 } from "lucide-react";
 
 export function Sidebar() {
+  const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<"theme" | "color" | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -36,6 +39,18 @@ export function Sidebar() {
     } else {
       document.documentElement.classList.remove("dark");
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (e) {
+      // Ignore API failure and clear client auth regardless
+    }
+    localStorage.removeItem("user_token");
+    localStorage.removeItem("user_mode");
+    localStorage.removeItem("user_email");
+    router.push("/login");
   };
 
   return (
@@ -181,6 +196,15 @@ export function Sidebar() {
                   <Settings className="w-3.5 h-3.5 text-gray-500" />
                   <span>Settings</span>
                 </Link>
+
+                {/* Log Out Option in Profile Menu */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-medium transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Log Out</span>
+                </button>
               </div>
             </div>
           )}
@@ -208,6 +232,17 @@ export function Sidebar() {
             <span>Projects</span>
           </Link>
         </div>
+      </div>
+
+      {/* Bottom Log Out Button */}
+      <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-medium transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Log Out</span>
+        </button>
       </div>
     </aside>
   );
