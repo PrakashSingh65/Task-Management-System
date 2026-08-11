@@ -1,30 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
   Search,
   User,
   Sun,
-  Palette,
   Pencil,
   Moon,
   Check,
 } from "lucide-react";
+import { getUserProfile, updateUserProfile } from "@/lib/api";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"profile" | "theme" | "color">("profile");
 
-  // Profile Form State
-  const [fullName, setFullName] = useState("Dexter");
-  const [title, setTitle] = useState("Designer");
-  const [username, setUsername] = useState("Dexuser");
-  const [email, setEmail] = useState("dexter@gmail.com");
-
-  // Theme & Color State
+  // User State
+  const [userId, setUserId] = useState<string>("");
+  const [fullName, setFullName] = useState("");
+  const [title, setTitle] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [colorMode, setColorMode] = useState("Blue");
+  const [loading, setLoading] = useState(true);
 
   const colorOptions = [
     { name: "Amber", class: "bg-amber-500" },
@@ -35,20 +35,69 @@ export default function SettingsPage() {
     { name: "Black", class: "bg-black" },
   ];
 
-  const handleThemeChange = (selectedTheme: "light" | "dark") => {
+  // 1. Page load hone par backend se profile fetch karein
+  useEffect(() => {
+    getUserProfile()
+      .then((data) => {
+        setUserId(data.id);
+        setFullName(data.fullName || "Dexter");
+        setTitle(data.title || "Designer");
+        setUsername(data.username || "Dexuser");
+        setEmail(data.email || "dexter@gmail.com");
+        setTheme(data.theme || "light");
+        setColorMode(data.colorMode || "Blue");
+      })
+      .catch((err) => console.error("Error loading user profile:", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // 2. Profile changes backend me save karein
+  const handleSaveProfile = async () => {
+    try {
+      await updateUserProfile(userId, { fullName, title, username });
+      alert("Profile updated successfully!");
+    } catch (error) {
+      alert("Failed to update profile");
+    }
+  };
+
+  // 3. Theme switch update karein
+  const handleThemeChange = async (selectedTheme: "light" | "dark") => {
     setTheme(selectedTheme);
     if (selectedTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
+    try {
+      await updateUserProfile(userId, { theme: selectedTheme });
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  // 4. Color mode change backend me save karein
+  const handleColorChange = async (selectedColor: string) => {
+    setColorMode(selectedColor);
+    try {
+      await updateUserProfile(userId, { colorMode: selectedColor });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-xs text-gray-500">
+        Loading settings from server...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950 flex text-gray-900 dark:text-gray-100 font-sans">
       {/* Settings Left Sidebar */}
       <aside className="w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 flex flex-col gap-4 min-h-screen">
-        {/* Back to App Link */}
         <Link
           href="/"
           className="flex items-center gap-2 text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors py-1 font-medium"
@@ -57,23 +106,21 @@ export default function SettingsPage() {
           <span>Back to app</span>
         </Link>
 
-        {/* Search */}
         <div className="relative">
           <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-gray-400" />
           <input
             type="text"
             placeholder="Search"
-            className="w-full pl-8 pr-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs outline-none focus:border-gray-400"
+            className="w-full pl-8 pr-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs outline-none"
           />
         </div>
 
-        {/* Sidebar Nav Items */}
         <nav className="flex flex-col gap-1 pt-1 text-xs font-medium">
           <button
             onClick={() => setActiveTab("profile")}
             className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors ${
               activeTab === "profile"
-                ? "bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-semibold"
+                ? "bg-gray-100 dark:bg-gray-800 font-semibold text-black dark:text-white"
                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
             }`}
           >
@@ -85,7 +132,7 @@ export default function SettingsPage() {
             onClick={() => setActiveTab("theme")}
             className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors ${
               activeTab === "theme"
-                ? "bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-semibold"
+                ? "bg-gray-100 dark:bg-gray-800 font-semibold text-black dark:text-white"
                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
             }`}
           >
@@ -97,11 +144,15 @@ export default function SettingsPage() {
             onClick={() => setActiveTab("color")}
             className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors ${
               activeTab === "color"
-                ? "bg-gray-100 dark:bg-gray-800 text-black dark:text-white font-semibold"
+                ? "bg-gray-100 dark:bg-gray-800 font-semibold text-black dark:text-white"
                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
             }`}
           >
-            <div className={`w-3.5 h-3.5 rounded-sm ${colorOptions.find(c => c.name === colorMode)?.class || 'bg-black'}`} />
+            <div
+              className={`w-3.5 h-3.5 rounded-sm ${
+                colorOptions.find((c) => c.name === colorMode)?.class || "bg-black"
+              }`}
+            />
             <span>Color</span>
           </button>
         </nav>
@@ -112,41 +163,42 @@ export default function SettingsPage() {
         {/* TAB 1: PROFILE */}
         {activeTab === "profile" && (
           <div className="space-y-8">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Profile</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Profile</h1>
+              <button
+                onClick={handleSaveProfile}
+                className="bg-black dark:bg-white text-white dark:text-black px-4 py-1.5 rounded-xl text-xs font-semibold shadow hover:opacity-90"
+              >
+                Save Changes
+              </button>
+            </div>
 
-            {/* Profile Info Card */}
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-6 shadow-sm">
-              {/* Profile Picture */}
               <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Profile picture</span>
                 <div className="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-sm shadow">
-                  D
+                  {fullName.charAt(0) || "D"}
                 </div>
               </div>
 
-              {/* Email */}
               <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Email</span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{email}</span>
-                  <button className="text-gray-400 hover:text-black dark:hover:text-white">
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
+                  <Pencil className="w-3.5 h-3.5 text-gray-400" />
                 </div>
               </div>
 
-              {/* Full Name */}
               <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Full name</span>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-64 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-xl outline-none text-gray-800 dark:text-gray-200"
+                  className="w-64 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-xl outline-none"
                 />
               </div>
 
-              {/* Title */}
               <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
                 <div>
                   <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Title</div>
@@ -156,11 +208,10 @@ export default function SettingsPage() {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-64 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-xl outline-none text-gray-800 dark:text-gray-200"
+                  className="w-64 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-xl outline-none"
                 />
               </div>
 
-              {/* Username */}
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Username</div>
@@ -170,22 +221,8 @@ export default function SettingsPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-64 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-xl outline-none text-gray-800 dark:text-gray-200"
+                  className="w-64 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-xl outline-none"
                 />
-              </div>
-            </div>
-
-            {/* Workspace Access Card */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Workspace access</h2>
-              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 flex items-center justify-between shadow-sm">
-                <span className="text-xs text-gray-400">Remove yourself from the workspace</span>
-                <button
-                  onClick={() => alert("Left Workspace")}
-                  className="px-4 py-2 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/60 rounded-xl text-xs font-semibold transition-colors"
-                >
-                  Leave Workspace
-                </button>
               </div>
             </div>
           </div>
@@ -194,16 +231,22 @@ export default function SettingsPage() {
         {/* TAB 2: THEME */}
         {activeTab === "theme" && (
           <div className="space-y-6">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Theme</h1>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-3 shadow-sm">
-              <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" onClick={() => handleThemeChange("light")}>
+            <h1 className="text-2xl font-bold tracking-tight">Theme</h1>
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-3">
+              <div
+                onClick={() => handleThemeChange("light")}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+              >
                 <div className="flex items-center gap-3">
                   <Sun className="w-4 h-4 text-gray-600" />
                   <span className="text-xs font-medium">Light</span>
                 </div>
                 {theme === "light" && <Check className="w-4 h-4 text-black dark:text-white" />}
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" onClick={() => handleThemeChange("dark")}>
+              <div
+                onClick={() => handleThemeChange("dark")}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+              >
                 <div className="flex items-center gap-3">
                   <Moon className="w-4 h-4 text-gray-600" />
                   <span className="text-xs font-medium">Dark</span>
@@ -217,12 +260,12 @@ export default function SettingsPage() {
         {/* TAB 3: COLOR */}
         {activeTab === "color" && (
           <div className="space-y-6">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Color Mode</h1>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-2 shadow-sm">
+            <h1 className="text-2xl font-bold tracking-tight">Color Mode</h1>
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-2">
               {colorOptions.map((c) => (
                 <div
                   key={c.name}
-                  onClick={() => setColorMode(c.name)}
+                  onClick={() => handleColorChange(c.name)}
                   className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-xs font-medium"
                 >
                   <div className="flex items-center gap-3">
