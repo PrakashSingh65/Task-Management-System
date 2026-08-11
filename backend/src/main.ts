@@ -1,17 +1,15 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  
-  app.enableCors();
+  // Frontend ko connect karne ke liye CORS Enable
+  app.enableCors({
+    origin: '*',
+  });
 
-  
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-
-  await app.listen(5000);
-  console.log(`Backend running on http://localhost:5000`);
+  await app.listen(4000);
+  console.log(`Backend server running on http://localhost:4000`);
 }
 bootstrap();

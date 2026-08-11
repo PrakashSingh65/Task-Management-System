@@ -1,47 +1,40 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Task, TaskDocument } from './schemas/task.schema';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TasksService {
-  constructor(
-    @InjectModel(Task.name) private taskModel: Model<TaskDocument>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
-    const newTask = new this.taskModel(createTaskDto);
-    return newTask.save();
+  async findAll(query: { search?: string; priority?: string; status?: string }) {
+    const { search, priority, status } = query;
+
+    return this.prisma.task.findMany({
+      where: {
+        ...(status && { status: status.toUpperCase() as any }),
+        ...(priority && { priority: priority.toUpperCase().replace(' ', '_') as any }),
+        ...(search && {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        }),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  async findAll(): Promise<Task[]> {
-    return this.taskModel.find().sort({ createdAt: -1 }).exec();
+  async create(data: any) {
+    return this.prisma.task.create({ data });
   }
 
-  async findOne(id: string): Promise<Task> {
-    const task = await this.taskModel.findById(id).exec();
-    if (!task) {
-      throw new NotFoundException(`Task with ID ${id} not found`);
-    }
-    return task;
+  async update(id: string, data: any) {
+    return this.prisma.task.update({
+      where: { id },
+      data,
+    });
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
-    const updatedTask = await this.taskModel
-      .findByIdAndUpdate(id, updateTaskDto, { new: true })
-      .exec();
-    if (!updatedTask) {
-      throw new NotFoundException(`Task with ID ${id} not found`);
-    }
-    return updatedTask;
-  }
-
-  async remove(id: string): Promise<void> {
-    const result = await this.taskModel.findByIdAndDelete(id).exec();
-    if (!result) {
-      throw new NotFoundException(`Task with ID ${id} not found`);
-    }
+  async remove(id: string) {
+    return this.prisma.task.delete({ where: { id } });
   }
 }
