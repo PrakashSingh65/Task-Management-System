@@ -11,10 +11,12 @@ import {
   Moon,
   Check,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { getUserProfile, updateUserProfile } from "@/lib/api";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"profile" | "theme" | "color">("profile");
+  const { theme, setTheme: setNextTheme } = useTheme();
 
   // User State
   const [userId, setUserId] = useState<string>("");
@@ -22,7 +24,6 @@ export default function SettingsPage() {
   const [title, setTitle] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [colorMode, setColorMode] = useState("Blue");
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +45,9 @@ export default function SettingsPage() {
         setTitle(data.title || "Designer");
         setUsername(data.username || "Dexuser");
         setEmail(data.email || "dexter@gmail.com");
-        setTheme(data.theme || "light");
+        if (data.theme) {
+          setNextTheme(data.theme);
+        }
         setColorMode(data.colorMode || "Blue");
       })
       .catch((err) => console.error("Error loading user profile:", err))
@@ -63,14 +66,11 @@ export default function SettingsPage() {
 
   // 3. Theme switch update karein
   const handleThemeChange = async (selectedTheme: "light" | "dark") => {
-    setTheme(selectedTheme);
-    if (selectedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    setNextTheme(selectedTheme);
     try {
-      await updateUserProfile(userId, { theme: selectedTheme });
+      if (userId) {
+        await updateUserProfile(userId, { theme: selectedTheme });
+      }
     } catch (err) {
       console.error(err);
     }

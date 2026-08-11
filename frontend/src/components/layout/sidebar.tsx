@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { logoutUser } from "@/lib/api";
+import { useTheme } from "next-themes";
 import {
   Check,
   ChevronRight,
@@ -18,9 +19,9 @@ import {
 
 export function Sidebar() {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<"theme" | "color" | null>(null);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [colorMode, setColorMode] = useState("Blue");
 
   const colorOptions = [
@@ -34,11 +35,6 @@ export function Sidebar() {
 
   const handleThemeChange = (selectedTheme: "light" | "dark") => {
     setTheme(selectedTheme);
-    if (selectedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
   };
 
   const handleLogout = async () => {
