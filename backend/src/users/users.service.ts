@@ -1,33 +1,42 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  // Default User Fetch / Create (Dexter)
   async getOrCreateDefaultUser() {
-    let user = await this.prisma.user.findFirst();
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          email: 'dexter@gmail.com',
-          fullName: 'Dexter',
-          title: 'Designer',
-          username: 'Dexuser',
-          theme: 'light',
-          colorMode: 'Blue',
-        },
-      });
+    try {
+      let user = await this.prisma.user.findFirst();
+
+      if (!user) {
+        user = await this.prisma.user.create({
+          data: {
+            email: 'dexter@gmail.com',
+            fullName: 'Dexter',
+            title: 'Designer',
+            username: 'Dexuser',
+            theme: 'light',
+            colorMode: 'Blue',
+          },
+        });
+      }
+      return user;
+    } catch (error) {
+      console.error('Error in getOrCreateDefaultUser:', error);
+      throw new InternalServerErrorException('Database user operation failed');
     }
-    return user;
   }
 
-  // Update Profile Info & Preferences
   async updateUser(id: string, data: any) {
-    return this.prisma.user.update({
-      where: { id },
-      data,
-    });
+    try {
+      return await this.prisma.user.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      console.error('Error in updateUser:', error);
+      throw new InternalServerErrorException('Failed to update user');
+    }
   }
 }
