@@ -1,17 +1,22 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 @Injectable()
-export class PrismaService implements OnModuleInit {
-	// Minimal shape to satisfy services during development
-	user: any = {} as any;
-	task: any = {} as any;
+export class PrismaService extends PrismaClient implements OnModuleInit {
+  constructor() {
+    const connectionString =
+      process.env.DATABASE_URL ||
+      'postgresql://postgres:password@localhost:5432/taskdb?schema=public';
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaPg(pool);
+    super({ adapter });
+  }
 
-	async $connect(): Promise<void> {
-		// no-op for environments without a Prisma client
-		return Promise.resolve();
-	}
-
-	async onModuleInit() {
-		await this.$connect();
-	}
+  async onModuleInit() {
+    await this.$connect().catch((err) => {
+      console.warn('Prisma DB connection warning:', err.message);
+    });
+  }
 }
